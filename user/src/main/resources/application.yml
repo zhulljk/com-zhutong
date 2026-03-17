@@ -1,0 +1,112 @@
+spring:
+  application:
+    name: user
+  datasource:
+    url: jdbc:mariadb://192.168.240.133:30930/zhut
+    username: root
+    password: 123456
+    driver-class-name: org.mariadb.jdbc.Driver
+  data:
+    redis:
+      host: 192.168.240.133
+      port: 30379
+  security:
+    oauth2:
+      client:
+        registration:
+          # GitHub OAuth2 配置
+          github:
+            client-id: ${OAUTH2_GITHUB_CLIENT_ID:your-github-client-id}
+            client-secret: ${OAUTH2_GITHUB_CLIENT_SECRET:your-github-client-secret}
+          # Google OAuth2 配置
+          google:
+            client-id: ${OAUTH2_GOOGLE_CLIENT_ID:your-google-client-id}
+            client-secret: ${OAUTH2_GOOGLE_CLIENT_SECRET:your-google-client-secret}
+        provider:
+          github:
+            authorization-uri: https://github.com/login/oauth/authorize
+            token-uri: https://github.com/login/oauth/access_token
+            user-info-uri: https://api.github.com/user
+          google:
+            authorization-uri: https://accounts.google.com/o/oauth2/auth
+            token-uri: https://oauth2.googleapis.com/token
+            user-info-uri: https://www.googleapis.com/oauth2/v3/userinfo
+            jwk-set-uri: https://www.googleapis.com/oauth2/v3/certs
+
+mybatis:
+  mapper-locations: classpath:mapper/*.xml
+  type-aliases-package: com.zhut.user.entity
+  configuration:
+    map-underscore-to-camel-case: true
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+
+jwt:
+  secret: ${JWT_SECRET:zhutong-secret-key-for-jwt-token-generation-must-be-long-enough-at-least-32-chars}
+  expiration: 7200000
+
+# 允许循环引用（用于解决 SecurityConfig 和 UserService 之间的依赖）
+spring.main.allow-circular-references: true
+
+# Resilience4j 熔断器配置
+resilience4j:
+  circuitbreaker:
+    configs:
+      default:
+        # 滑动窗口大小
+        slidingWindowSize: 10
+        # 滑动窗口类型
+        slidingWindowType: COUNT_BASED
+        # 最小调用次数
+        minimumNumberOfCalls: 5
+        # 失败率阈值
+        failureRateThreshold: 50
+        # 慢调用率阈值
+        slowCallRateThreshold: 80
+        # 慢调用时长阈值
+        slowCallDurationThreshold: 2000
+        # 熔断器打开后等待时间
+        waitDurationInOpenState: 30000
+        # 半开状态允许通过的请求数
+        permittedNumberOfCallsInHalfOpenState: 3
+        # 自动从打开状态切换到半开状态
+        automaticTransitionFromOpenToHalfOpenEnabled: true
+    instances:
+      oauth2UserService:
+        baseConfig: default
+        # 记录为异常的异常类型
+        recordExceptions:
+          - java.lang.Exception
+        # 忽略的异常类型
+        ignoreExceptions:
+          - java.lang.IllegalArgumentException
+  retry:
+    configs:
+      default:
+        # 最大重试次数
+        maxAttempts: 3
+        # 重试间隔
+        waitDuration: 1000
+        # 重试间隔乘数（指数退避）
+        multiplier: 2
+        # 是否启用指数退避
+        enableExponentialBackoff: true
+        # 指数退避乘数
+        exponentialBackoffMultiplier: 2
+        # 重试的异常类型
+        retryExceptions:
+          - java.io.IOException
+          - java.net.SocketTimeoutException
+          - java.net.ConnectException
+    instances:
+      oauth2UserService:
+        baseConfig: default
+  timelimiter:
+    configs:
+      default:
+        # 超时时长
+        timeoutDuration: 5s
+        # 是否取消未来执行
+        cancelRunningFuture: true
+    instances:
+      oauth2UserService:
+        baseConfig: default

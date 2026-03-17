@@ -1,4 +1,4 @@
-package com.example.service;
+package com.example.dao;
 
 import com.example.mapper.UserMapper;
 import com.example.vo.MetaVO;
@@ -6,15 +6,15 @@ import com.example.vo.PageVO;
 import com.example.vo.UserVO;
 import java.util.List;
 import java.util.stream.Collectors;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Repository;
 import org.springframework.util.StringUtils;
 
-@Service
-public class UserTableService {
+@Repository
+public class UserDao {
     private final UserMapper userMapper;
     private TableMeta tableMeta;
 
-    public UserTableService(UserMapper userMapper) {
+    public UserDao(UserMapper userMapper) {
         this.userMapper = userMapper;
         this.tableMeta = loadMeta();
     }
@@ -66,7 +66,7 @@ public class UserTableService {
 
     public MetaVO getMeta() {
         List<MetaVO.ColumnVO> columns = tableMeta.columns.stream()
-                .map(column -> new MetaVO.ColumnVO(column.name(), column.primaryKey(), column.autoIncrement()))
+                .map(col -> new MetaVO.ColumnVO(col.name(), col.primaryKey(), col.autoIncrement()))
                 .collect(Collectors.toList());
         return new MetaVO(tableMeta.primaryKey, columns);
     }

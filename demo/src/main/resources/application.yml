@@ -6,5 +6,35 @@ spring:
     username: root
     password: 123456
     driver-class-name: org.mariadb.jdbc.Driver
+  data:
+    redis:
+      host: 192.168.240.133
+      port: 30379
 server:
   port: 8080
+
+# JWT 配置
+jwt:
+  secret: zhutong-secret-key-for-jwt-token-generation-very-long-key
+  expiration: 86400000
+
+# OAuth2 配置占位（SSO 与 OAuth2 返回类型区分使用）
+oauth2:
+  clientId: demo-client-id
+  authorizeUrl: https://auth-server.example.com/oauth/authorize
+  redirectUri: https://demo.example.com/oauth/callback
+
+# 短信相关配置（占位，暂无实际属性）
+sms:
+  # 如需启用短信功能，请在此添加具体配置项
+  mail:
+    host: "smtp.qq.com"
+    port: 465
+    username: "993126013@qq.com"
+    password: "ohqqxlxunvjjbedb"
+    from: "993126013@qq.com"
+  aliyun:
+    accessKeyId: ""
+    accessKeySecret: ""
+    signName: ""
+    templateCode: ""

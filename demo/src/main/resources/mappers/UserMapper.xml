@@ -4,12 +4,23 @@
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.example.mapper.UserMapper">
     <resultMap id="UserMap" type="com.example.vo.UserVO">
-        <id column="id" property="id"/>
+        <id column="user_id" property="id"/>
         <result column="username" property="username"/>
         <result column="password" property="password"/>
         <result column="code" property="code"/>
         <result column="create_time" property="createTime"/>
         <result column="update_time" property="updateTime"/>
+        <result column="email" property="email"/>
+        <result column="phone" property="phone"/>
+        <result column="nickname" property="nickname"/>
+        <result column="avatar" property="avatar"/>
+        <result column="gender" property="gender"/>
+        <result column="age" property="age"/>
+        <result column="status" property="status"/>
+        <result column="created_at" property="createdAt"/>
+        <result column="updated_at" property="updatedAt"/>
+        <result column="last_login_time" property="lastLoginTime"/>
+        <result column="last_login_ip" property="lastLoginIp"/>
     </resultMap>
 
     <select id="findPage" resultMap="UserMap">
@@ -28,7 +39,13 @@
             <if test="id != null">`id`,</if>
             <if test="username != null">`username`,</if>
             <if test="password != null">`password`,</if>
-            <if test="code != null">`code`,</if>
+            <if test="email != null">`email`,</if>
+            <if test="phone != null">`phone`,</if>
+            <if test="nickname != null">`nickname`,</if>
+            <if test="avatar != null">`avatar`,</if>
+            <if test="gender != null">`gender`,</if>
+            <if test="age != null">`age`,</if>
+            <if test="status != null">`status`,</if>
             <if test="createTime != null">`create_time`,</if>
             <if test="updateTime != null">`update_time`,</if>
         </trim>
@@ -36,7 +53,13 @@
             <if test="id != null">#{id},</if>
             <if test="username != null">#{username},</if>
             <if test="password != null">#{password},</if>
-            <if test="code != null">#{code},</if>
+            <if test="email != null">#{email},</if>
+            <if test="phone != null">#{phone},</if>
+            <if test="nickname != null">#{nickname},</if>
+            <if test="avatar != null">#{avatar},</if>
+            <if test="gender != null">#{gender},</if>
+            <if test="age != null">#{age},</if>
+            <if test="status != null">#{status},</if>
             <if test="createTime != null">#{createTime},</if>
             <if test="updateTime != null">#{updateTime},</if>
         </trim>

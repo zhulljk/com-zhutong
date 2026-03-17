@@ -6,9 +6,13 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseBody;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @ControllerAdvice
 public class AllExceptionHandler {
+    private static final Logger log = LoggerFactory.getLogger(AllExceptionHandler.class);
+
     /**
      * 全局异常处理
      * @param e
@@ -16,17 +20,13 @@ public class AllExceptionHandler {
      */
     @ExceptionHandler(value = Exception.class)
     @ResponseBody
-    public String handleException(Exception e) {
-        return "error";
+    public ResponseEntity<String> handleException(Exception e) {
+        log.error("Exception occurred", e);
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("error: " + e.getMessage());
     }
+
+    @ExceptionHandler(BussinessException.class)
     public ResponseEntity<String> handleBusinessException(BussinessException e) {
-
-
         return ResponseEntity.status(HttpStatus.OK).body("error");
-
-    }
-
-    public static void main(String[] args) {
-        System.out.println("hello world");
     }
 }

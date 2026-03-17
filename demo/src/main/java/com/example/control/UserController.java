@@ -1,6 +1,6 @@
 package com.example.control;
 
-import com.example.service.UserTableService;
+import com.example.service.UserService;
 import com.example.vo.DeleteResultVO;
 import com.example.vo.MetaVO;
 import com.example.vo.PageVO;
@@ -20,21 +20,21 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/users")
 public class UserController {
-    private final UserTableService userTableService;
+    private final UserService userService;
 
-    public UserController(UserTableService userTableService) {
-        this.userTableService = userTableService;
+    public UserController(UserService userService) {
+        this.userService = userService;
     }
 
     @GetMapping
     public PageVO<UserVO> list(@RequestParam(value = "page", defaultValue = "1") int page,
                                @RequestParam(value = "pageSize", defaultValue = "20") int pageSize) {
-        return userTableService.findPage(page, pageSize);
+        return userService.findPage(page, pageSize);
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<UserVO> getById(@PathVariable("id") Object id) {
-        UserVO data = userTableService.findById(id);
+        UserVO data = userService.findById(id);
         if (data == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }
@@ -43,14 +43,14 @@ public class UserController {
 
     @PostMapping
     public ResponseEntity<UserVO> create(@RequestBody UserVO payload) {
-        UserVO data = userTableService.create(payload);
+        UserVO data = userService.create(payload);
         return ResponseEntity.status(HttpStatus.CREATED).body(data);
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<UserVO> update(@PathVariable("id") Object id,
                                          @RequestBody UserVO payload) {
-        UserVO data = userTableService.update(id, payload);
+        UserVO data = userService.update(id, payload);
         if (data == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }
@@ -59,12 +59,12 @@ public class UserController {
 
     @DeleteMapping("/{id}")
     public ResponseEntity<DeleteResultVO> delete(@PathVariable("id") Object id) {
-        int deleted = userTableService.delete(id);
+        int deleted = userService.delete(id);
         return ResponseEntity.ok(new DeleteResultVO(deleted));
     }
 
     @GetMapping("/meta")
     public MetaVO meta() {
-        return userTableService.getMeta();
+        return userService.getMeta();
     }
 }
