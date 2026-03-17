@@ -1,5 +1,10 @@
-spring：
-  application：
-    name：demo
-server：
-  port：8080
+spring:
+  application:
+    name: demo
+  datasource:
+    url: jdbc:mariadb://192.168.240.133:30930/zhut
+    username: root
+    password: 123456
+    driver-class-name: org.mariadb.jdbc.Driver
+server:
+  port: 8080

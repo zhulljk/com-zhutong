@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.mapper.UserMapper">
+    <resultMap id="UserMap" type="com.example.vo.UserVO">
+        <id column="id" property="id"/>
+        <result column="username" property="username"/>
+        <result column="password" property="password"/>
+        <result column="code" property="code"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+
+    <select id="findPage" resultMap="UserMap">
+        select * from `user`
+        order by ${primaryKey}
+        limit #{limit} offset #{offset}
+    </select>
+
+    <select id="findById" resultMap="UserMap">
+        select * from `user` where ${primaryKey} = #{id}
+    </select>
+
+    <insert id="insert" parameterType="com.example.vo.UserVO">
+        insert into `user`
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="id != null">`id`,</if>
+            <if test="username != null">`username`,</if>
+            <if test="password != null">`password`,</if>
+            <if test="code != null">`code`,</if>
+            <if test="createTime != null">`create_time`,</if>
+            <if test="updateTime != null">`update_time`,</if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="id != null">#{id},</if>
+            <if test="username != null">#{username},</if>
+            <if test="password != null">#{password},</if>
+            <if test="code != null">#{code},</if>
+            <if test="createTime != null">#{createTime},</if>
+            <if test="updateTime != null">#{updateTime},</if>
+        </trim>
+    </insert>
+
+    <update id="update">
+        update `user`
+        <set>
+            <if test="payload.username != null">`username` = #{payload.username},</if>
+            <if test="payload.password != null">`password` = #{payload.password},</if>
+            <if test="payload.code != null">`code` = #{payload.code},</if>
+            <if test="payload.createTime != null">`create_time` = #{payload.createTime},</if>
+            <if test="payload.updateTime != null">`update_time` = #{payload.updateTime},</if>
+        </set>
+        where ${primaryKey} = #{id}
+    </update>
+
+    <delete id="delete">
+        delete from `user` where ${primaryKey} = #{id}
+    </delete>
+
+    <select id="currentSchema" resultType="string">
+        select database()
+    </select>
+
+    <select id="findColumns" resultType="com.example.mapper.UserMapper$ColumnMeta">
+        select COLUMN_NAME as name,
+               CASE WHEN COLUMN_KEY = 'PRI' THEN TRUE ELSE FALSE END as primaryKey,
+               CASE WHEN LOCATE('auto_increment', lower(EXTRA)) > 0 THEN TRUE ELSE FALSE END as autoIncrement
+        from information_schema.COLUMNS
+        where TABLE_SCHEMA = #{schema} and TABLE_NAME = 'user'
+        order by ORDINAL_POSITION
+    </select>
+
+    <select id="lastInsertId" resultType="long">
+        select last_insert_id()
+    </select>
+
+    <select id="countAll" resultType="long">
+        select count(*) from `user`
+    </select>
+</mapper>
