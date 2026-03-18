@@ -98,10 +98,12 @@ public class AuthController {
     
     /**
      * OAuth2 登录页面（重定向到 OAuth2 提供商）
+     * 支持的提供商：github, google
+     * 使用方式：访问 /api/auth/oauth2/login/github 或 /api/auth/oauth2/login/google
      */
-    @GetMapping("/oauth2/login")
-    public void oauth2Login() {
-        // 由 Spring Security 处理重定向
+    @GetMapping("/oauth2/login/{provider}")
+    public void oauth2Login(@PathVariable String provider) {
+        // 由 Spring Security 处理重定向到 OAuth2 提供商
     }
     
     /**

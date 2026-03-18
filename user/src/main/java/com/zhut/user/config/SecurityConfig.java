@@ -61,6 +61,8 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                 // OAuth2 登录回调
                 .requestMatchers("/login/oauth2/code/**").permitAll()
+                // OAuth2 登录入口
+                .requestMatchers("/api/auth/oauth2/login/**").permitAll()
                 // 其他接口需要认证
                 .anyRequest().authenticated()
             )
