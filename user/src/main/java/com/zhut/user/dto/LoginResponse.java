@@ -5,9 +5,14 @@ package com.zhut.user.dto;
  */
 public class LoginResponse {
     /**
-     * JWT Token
+     * Access Token
      */
-    private String token;
+    private String accessToken;
+    
+    /**
+     * Refresh Token
+     */
+    private String refreshToken;
     
     /**
      * Token 类型
@@ -15,9 +20,14 @@ public class LoginResponse {
     private String tokenType;
     
     /**
-     * 过期时间（秒）
+     * Access Token 过期时间（秒）
      */
     private Long expiresIn;
+    
+    /**
+     * Refresh Token 过期时间（秒）
+     */
+    private Long refreshExpiresIn;
     
     /**
      * 用户 ID
@@ -49,12 +59,20 @@ public class LoginResponse {
      */
     private String phone;
 
-    public String getToken() {
-        return token;
+    public String getAccessToken() {
+        return accessToken;
     }
 
-    public void setToken(String token) {
-        this.token = token;
+    public void setAccessToken(String accessToken) {
+        this.accessToken = accessToken;
+    }
+    
+    public String getRefreshToken() {
+        return refreshToken;
+    }
+
+    public void setRefreshToken(String refreshToken) {
+        this.refreshToken = refreshToken;
     }
 
     public String getTokenType() {
@@ -71,6 +89,14 @@ public class LoginResponse {
 
     public void setExpiresIn(Long expiresIn) {
         this.expiresIn = expiresIn;
+    }
+    
+    public Long getRefreshExpiresIn() {
+        return refreshExpiresIn;
+    }
+
+    public void setRefreshExpiresIn(Long refreshExpiresIn) {
+        this.refreshExpiresIn = refreshExpiresIn;
     }
 
     public Long getUserId() {

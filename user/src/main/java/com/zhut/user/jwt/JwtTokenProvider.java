@@ -1,10 +1,8 @@
 package com.zhut.user.jwt;
 
 import com.zhut.user.entity.User;
-import com.zhut.user.util.RedisTokenStore;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
-import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -14,151 +12,162 @@ import java.util.Date;
 
 /**
  * JWT Token 提供者
- * 集成 Redis 实现 token 存储和续期
+ * 实现 Access Token + Refresh Token 双 Token 机制
  */
 @Component
-@RequiredArgsConstructor
 public class JwtTokenProvider {
     
     @Value("${jwt.secret:zhutong-secret-key-for-jwt-token-generation-must-be-long-enough}")
     private String secret;
     
-    @Value("${jwt.expiration:7200000}")
-    private Long expiration;
+    @Value("${jwt.access-token.expiration:900000}")
+    private Long accessTokenExpiration;
     
-    private final RedisTokenStore redisTokenStore;
+    @Value("${jwt.refresh-token.expiration:604800000}")
+    private Long refreshTokenExpiration;
     
     /**
-     * 生成 JWT Token 并存储到 Redis
+     * 生成 Access Token
      * @param user 用户信息
-     * @return JWT Token
+     * @return Access Token
      */
-    public String generateToken(User user) {
+    public String generateAccessToken(User user) {
         Date now = new Date();
-        Date expiryDate = new Date(now.getTime() + expiration);
+        Date expiryDate = new Date(now.getTime() + accessTokenExpiration);
         
         SecretKey key = getSigningKey();
         
-        String token = Jwts.builder()
+        return Jwts.builder()
                 .subject(String.valueOf(user.getId()))
                 .claim("userId", user.getId())
                 .claim("username", user.getUsername())
                 .claim("nickname", user.getNickname())
+                .claim("type", "access")
                 .issuedAt(now)
                 .expiration(expiryDate)
                 .signWith(key)
                 .compact();
-        
-        // 存储到 Redis，设置 2 小时过期
-        redisTokenStore.storeToken(user.getId(), token);
-        
-        return token;
     }
     
     /**
-     * 从 Token 中获取用户 ID
+     * 生成 Refresh Token
+     * @param user 用户信息
+     * @return Refresh Token
      */
-    public Long getUserIdFromToken(String token) {
+    public String generateRefreshToken(User user) {
+        Date now = new Date();
+        Date expiryDate = new Date(now.getTime() + refreshTokenExpiration);
+        
+        SecretKey key = getSigningKey();
+        
+        return Jwts.builder()
+                .subject(String.valueOf(user.getId()))
+                .claim("userId", user.getId())
+                .claim("type", "refresh")
+                .issuedAt(now)
+                .expiration(expiryDate)
+                .signWith(key)
+                .compact();
+    }
+    
+    /**
+     * 从 Access Token 中获取用户 ID
+     */
+    public Long getUserIdFromAccessToken(String token) {
         Claims claims = getClaims(token);
         return claims.get("userId", Long.class);
     }
     
     /**
-     * 从 Token 中获取用户名
+     * 从 Refresh Token 中获取用户 ID
      */
-    public String getUsernameFromToken(String token) {
+    public Long getUserIdFromRefreshToken(String token) {
+        Claims claims = getClaims(token);
+        return claims.get("userId", Long.class);
+    }
+    
+    /**
+     * 从 Access Token 中获取用户名
+     */
+    public String getUsernameFromAccessToken(String token) {
         Claims claims = getClaims(token);
         return claims.get("username", String.class);
     }
     
     /**
-     * 验证 Token 是否有效
+     * 验证 Access Token 是否有效
      * 1. 验证 JWT 签名
-     * 2. 验证 Redis 中是否存在
+     * 2. 验证 token 类型为 access
+     * 3. 验证是否过期
      */
-    public boolean validateToken(String token) {
+    public boolean validateAccessToken(String token) {
         try {
-            // 首先验证 JWT 签名是否有效
-            Jwts.parser().verifyWith(getSigningKey()).build().parseSignedClaims(token);
-            
-            // 获取用户 ID
             Claims claims = getClaims(token);
-            Long userId = claims.get("userId", Long.class);
-            
-            // 验证 Redis 中是否存在该 token
-            if (userId != null) {
-                return redisTokenStore.validateToken(userId, token);
-            }
-            return false;
+            String type = claims.get("type", String.class);
+            return "access".equals(type) && !isTokenExpired(claims);
         } catch (JwtException | IllegalArgumentException e) {
             return false;
         }
     }
     
     /**
-     * 验证并刷新 Token
-     * 验证成功后重置过期时间为 2 小时
-     * @param token JWT Token
-     * @return 是否验证成功
+     * 验证 Refresh Token 是否有效
+     * 1. 验证 JWT 签名
+     * 2. 验证 token 类型为 refresh
+     * 3. 验证是否过期
      */
-    public boolean validateAndRefreshToken(String token) {
+    public boolean validateRefreshToken(String token) {
         try {
-            // 首先验证 JWT 签名是否有效
-            Jwts.parser().verifyWith(getSigningKey()).build().parseSignedClaims(token);
-            
-            // 获取用户 ID
             Claims claims = getClaims(token);
-            Long userId = claims.get("userId", Long.class);
-            
-            // 验证 Redis 中是否存在该 token
-            if (userId != null && redisTokenStore.validateToken(userId, token)) {
-                // 刷新 Token 过期时间
-                redisTokenStore.refreshToken(userId);
-                return true;
-            }
-            return false;
+            String type = claims.get("type", String.class);
+            return "refresh".equals(type) && !isTokenExpired(claims);
         } catch (JwtException | IllegalArgumentException e) {
             return false;
         }
     }
     
     /**
-     * 刷新 Token
-     * @param token JWT Token
+     * 使用 Refresh Token 刷新 Access Token
+     * @param refreshToken 刷新令牌
+     * @param user 用户信息
+     * @return 新的 Access Token，如果刷新失败返回 null
      */
-    public void refreshToken(String token) {
-        try {
-            Claims claims = getClaims(token);
-            Long userId = claims.get("userId", Long.class);
-            if (userId != null) {
-                redisTokenStore.refreshToken(userId);
-            }
-        } catch (JwtException | IllegalArgumentException e) {
-            // 忽略刷新失败
+    public String refreshAccessToken(String refreshToken, User user) {
+        if (validateRefreshToken(refreshToken)) {
+            return generateAccessToken(user);
         }
+        return null;
     }
     
     /**
      * 使 Token 失效（登出时使用）
+     * 由于不再使用 Redis，客户端只需删除本地存储的 token 即可
      * @param token JWT Token
      */
     public void invalidateToken(String token) {
-        try {
-            Claims claims = getClaims(token);
-            Long userId = claims.get("userId", Long.class);
-            if (userId != null) {
-                redisTokenStore.deleteToken(userId);
-            }
-        } catch (JwtException | IllegalArgumentException e) {
-            // 忽略
-        }
+        // 无状态 token，无需特殊处理
+        // 如果需要立即失效，可以考虑使用黑名单机制
     }
     
     /**
-     * 获取过期时间（秒）
+     * 获取 Access Token 过期时间（秒）
      */
-    public Long getExpirationTime() {
-        return expiration / 1000;
+    public Long getAccessTokenExpirationTime() {
+        return accessTokenExpiration / 1000;
+    }
+    
+    /**
+     * 获取 Refresh Token 过期时间（秒）
+     */
+    public Long getRefreshTokenExpirationTime() {
+        return refreshTokenExpiration / 1000;
+    }
+    
+    /**
+     * 检查 token 是否过期
+     */
+    private boolean isTokenExpired(Claims claims) {
+        return claims.getExpiration().before(new Date());
     }
     
     /**

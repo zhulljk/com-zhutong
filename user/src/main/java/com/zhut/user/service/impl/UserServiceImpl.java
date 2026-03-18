@@ -94,14 +94,17 @@ public class UserServiceImpl implements UserService {
         // 更新最后登录时间
         userMapper.updateLastLoginTime(user.getId());
         
-        // 生成 JWT Token
-        String token = jwtTokenProvider.generateToken(user);
+        // 生成 Access Token 和 Refresh Token
+        String accessToken = jwtTokenProvider.generateAccessToken(user);
+        String refreshToken = jwtTokenProvider.generateRefreshToken(user);
         
         // 构建响应
         LoginResponse loginResponse = new LoginResponse();
-        loginResponse.setToken(token);
+        loginResponse.setAccessToken(accessToken);
+        loginResponse.setRefreshToken(refreshToken);
         loginResponse.setTokenType("Bearer");
-        loginResponse.setExpiresIn(jwtTokenProvider.getExpirationTime());
+        loginResponse.setExpiresIn(jwtTokenProvider.getAccessTokenExpirationTime());
+        loginResponse.setRefreshExpiresIn(jwtTokenProvider.getRefreshTokenExpirationTime());
         loginResponse.setUserId(user.getId());
         loginResponse.setUsername(user.getUsername());
         loginResponse.setNickname(user.getNickname());

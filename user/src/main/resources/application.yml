@@ -42,7 +42,10 @@ mybatis:
 
 jwt:
   secret: ${JWT_SECRET:zhutong-secret-key-for-jwt-token-generation-must-be-long-enough-at-least-32-chars}
-  expiration: 7200000
+  access-token:
+    expiration: 900000  # 15 分钟
+  refresh-token:
+    expiration: 604800000  # 7 天
 
 # 允许循环引用（用于解决 SecurityConfig 和 UserService 之间的依赖）
 spring.main.allow-circular-references: true

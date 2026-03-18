@@ -49,6 +49,54 @@ public class AuthController {
     }
     
     /**
+     * 刷新 Access Token
+     */
+    @PostMapping("/refresh")
+    public Result<LoginResponse> refreshToken(@RequestHeader("Authorization") String refreshToken) {
+        try {
+            // 提取 Refresh Token（去掉 "Bearer " 前缀）
+            String token = refreshToken.startsWith("Bearer ") ? refreshToken.substring(7) : refreshToken;
+            
+            // 验证 Refresh Token
+            if (!jwtTokenProvider.validateRefreshToken(token)) {
+                return Result.error("Refresh Token 已过期或无效");
+            }
+            
+            // 获取用户 ID
+            Long userId = jwtTokenProvider.getUserIdFromRefreshToken(token);
+            User user = userService.getById(userId);
+            
+            if (user == null) {
+                return Result.error("用户不存在");
+            }
+            
+            // 生成新的 Access Token
+            String newAccessToken = jwtTokenProvider.refreshAccessToken(token, user);
+            if (newAccessToken == null) {
+                return Result.error("Token 刷新失败");
+            }
+            
+            // 构建响应
+            LoginResponse response = new LoginResponse();
+            response.setAccessToken(newAccessToken);
+            response.setRefreshToken(token); // 继续使用旧的 Refresh Token
+            response.setTokenType("Bearer");
+            response.setExpiresIn(jwtTokenProvider.getAccessTokenExpirationTime());
+            response.setRefreshExpiresIn(jwtTokenProvider.getRefreshTokenExpirationTime());
+            response.setUserId(user.getId());
+            response.setUsername(user.getUsername());
+            response.setNickname(user.getNickname());
+            response.setAvatar(user.getAvatar());
+            response.setEmail(user.getEmail());
+            response.setPhone(user.getPhone());
+            
+            return Result.success(response);
+        } catch (Exception e) {
+            return Result.error("Token 刷新失败：" + e.getMessage());
+        }
+    }
+    
+    /**
      * OAuth2 登录页面（重定向到 OAuth2 提供商）
      */
     @GetMapping("/oauth2/login")

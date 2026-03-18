@@ -18,7 +18,7 @@ import java.util.Collections;
 
 /**
  * JWT 认证过滤器
- * 每次请求验证 token，验证成功后自动刷新 token 过期时间为 2 小时
+ * 验证 Access Token 的有效性
  */
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
@@ -33,13 +33,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, 
                                     HttpServletResponse response, 
                                     FilterChain filterChain) throws ServletException, IOException {
-        // 从请求头中获取 Token
+        // 从请求头中获取 Access Token
         String token = getTokenFromRequest(request);
         
-        if (StringUtils.hasText(token) && jwtTokenProvider.validateAndRefreshToken(token)) {
+        if (StringUtils.hasText(token) && jwtTokenProvider.validateAccessToken(token)) {
             // 从 Token 中获取用户信息
-            Long userId = jwtTokenProvider.getUserIdFromToken(token);
-            String username = jwtTokenProvider.getUsernameFromToken(token);
+            Long userId = jwtTokenProvider.getUserIdFromAccessToken(token);
+            String username = jwtTokenProvider.getUsernameFromAccessToken(token);
             
             if (userId != null) {
                 // 创建用户对象（基本信息从 Token 中获取）
