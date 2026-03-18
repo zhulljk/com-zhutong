@@ -35,10 +35,17 @@
 - Spring Boot Actuator 端点
 - 服务健康状态监控
 - 服务指标收集
+- Spring Boot Admin 集中监控
 
 ### 3. 配置中心（预留）
 - Consul KV 存储
 - 动态配置刷新
+
+### 4. 服务注册管理
+- User Service 注册 (端口：8080)
+- Menu Service 注册 (端口：8081)
+- 支持多实例部署
+- 负载均衡支持
 
 ## 项目结构
 
@@ -87,6 +94,10 @@ mvn clean package -DskipTests
   - port: 8500
   - scheme: http
 
+### 注册的服务
+- **User Service**: 用户认证服务 (端口：8080)
+- **Menu Service**: 菜单管理服务 (端口：8081)
+
 ## 服务注册
 
 ### 注册到 Consul
@@ -97,11 +108,46 @@ mvn clean package -DskipTests
 - 服务端口
 - 健康检查配置
 
+### 已注册的服务
+启动后，Consul 中将注册以下服务：
+1. **center-server** - 中心服务 (端口：8090)
+2. **user** - 用户服务 (端口：8080)
+3. **menu** - 菜单服务 (端口：8081)
+
 ### 健康检查
 - **检查类型**: HTTP 检查
 - **检查路径**: /actuator/health
 - **检查间隔**: 10 秒
 - **超时时间**: 5 秒
+
+### 服务发现
+通过 Consul 可以发现其他注册的服务：
+- User 服务
+- Menu 服务
+- 其他微服务
+
+使用 `@LoadBalanced RestTemplate` 或 `OpenFeign` 进行服务间调用：
+
+```java
+// RestTemplate 方式
+@Autowired
+private RestTemplate restTemplate;
+
+public void callUserService() {
+    // 通过服务名直接调用，无需硬编码地址
+    String response = restTemplate.getForObject(
+        "http://user/api/users/1", 
+        String.class
+    );
+}
+
+// OpenFeign 方式（需要额外配置）
+@FeignClient(name = "menu")
+public interface MenuClient {
+    @GetMapping("/api/menus/{id}")
+    Menu getMenu(@PathVariable("id") Long id);
+}
+```
 
 ## Actuator 端点
 
@@ -118,9 +164,9 @@ mvn clean package -DskipTests
 ## 服务发现
 
 ### 发现其他服务
-通过 Consul 可以发现其他注册的服务：
-- User 服务
-- Menu 服务
+通过 Consul 可以发现所有注册的服务：
+- User 服务 (user)
+- Menu 服务 (menu)
 - 其他微服务
 
 ### 服务调用
@@ -192,8 +238,30 @@ public class ConfigController {
 
 ### 本地开发
 1. 启动 Consul
+```bash
+consul agent -dev -ui
+```
+
 2. 启动 Center Server
+```bash
+cd center-server
+mvn spring-boot:run
+```
+
 3. 启动其他微服务
+```bash
+# 启动 User 服务
+cd ../user
+mvn spring-boot:run
+
+# 启动 Menu 服务
+cd ../menu
+mvn spring-boot:run
+```
+
+4. 验证服务注册
+- 访问 Consul UI: http://localhost:8500/ui/dc1/services
+- 应该能看到 center-server、user、menu 三个服务
 
 ### 生产环境
 1. Consul 集群部署
