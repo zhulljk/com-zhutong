@@ -1,6 +1,14 @@
 spring:
   application:
     name: user
+  cloud:
+    consul:
+      host: localhost
+      port: 8500
+      discovery:
+        service-name: ${spring.application.name}
+        health-check-interval: 10s
+        prefer-ip-address: true
   datasource:
     url: jdbc:mariadb://192.168.240.133:30930/zhut
     username: root

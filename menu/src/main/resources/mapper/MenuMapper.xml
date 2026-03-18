@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.zhut.menu.mapper.MenuMapper">
+
+    <resultMap id="BaseResultMap" type="com.zhut.menu.entity.Menu">
+        <id column="id" property="id"/>
+        <result column="parent_id" property="parentId"/>
+        <result column="name" property="name"/>
+        <result column="icon" property="icon"/>
+        <result column="path" property="path"/>
+        <result column="component" property="component"/>
+        <result column="permission" property="permission"/>
+        <result column="type" property="type"/>
+        <result column="sort_order" property="sortOrder"/>
+        <result column="status" property="status"/>
+        <result column="visible" property="visible"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id, parent_id, name, icon, path, component, permission, type,
+        sort_order, status, visible, create_time, update_time
+    </sql>
+
+    <select id="selectById" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM menu
+        WHERE id = #{id}
+    </select>
+
+    <select id="selectByParentId" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM menu
+        WHERE parent_id = #{parentId}
+        ORDER BY sort_order ASC
+    </select>
+
+    <select id="selectAll" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM menu
+        ORDER BY sort_order ASC
+    </select>
+
+    <select id="selectByNameAndParentId" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM menu
+        WHERE name = #{name} AND parent_id = #{parentId}
+    </select>
+
+    <insert id="insert" parameterType="com.zhut.menu.entity.Menu">
+        INSERT INTO menu (
+            id, parent_id, name, icon, path, component, permission, type,
+            sort_order, status, visible, create_time, update_time
+        ) VALUES (
+            #{id}, #{parentId}, #{name}, #{icon}, #{path}, #{component}, #{permission}, #{type},
+            #{sortOrder}, #{status}, #{visible}, NOW(), NOW()
+        )
+    </insert>
+
+    <update id="update" parameterType="com.zhut.menu.entity.Menu">
+        UPDATE menu
+        <set>
+            <if test="parentId != null">parent_id = #{parentId},</if>
+            <if test="name != null">name = #{name},</if>
+            <if test="icon != null">icon = #{icon},</if>
+            <if test="path != null">path = #{path},</if>
+            <if test="component != null">component = #{component},</if>
+            <if test="permission != null">permission = #{permission},</if>
+            <if test="type != null">type = #{type},</if>
+            <if test="sortOrder != null">sort_order = #{sortOrder},</if>
+            <if test="status != null">status = #{status},</if>
+            <if test="visible != null">visible = #{visible},</if>
+            update_time = NOW()
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM menu WHERE id = #{id}
+    </delete>
+
+    <select id="countByParentId" resultType="int">
+        SELECT COUNT(*) FROM menu WHERE parent_id = #{parentId}
+    </select>
+
+</mapper>
